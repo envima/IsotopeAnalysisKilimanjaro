@@ -1,0 +1,5 @@
+outs:
+- md5: eabe77b9180160125ff6ab6f69cfb32a.dir
+  size: 1481103
+  nfiles: 5
+  path: compiled_data

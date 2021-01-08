@@ -1,0 +1,138 @@
+---
+title: Data for stable isotope composition of atmospheric water input for 2013
+  and 2014 at the southern slopes of Mt. Kilimanjaro, Tanzania
+author: Insa Otte, Florian Detsch, Adrian Gütlein, Martha Scholl, Ralf Kiese, Tim
+  Appelhans, Thomas Nauss
+date: "7 1 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# Setup
+library(envimaR)
+source("~/plygrnd/IsotopeAnalysisKilimanjaro/src/functions/000_setup.R")
+
+plotlevels <- c("fer0", "fpd0", "fpo0", "foc0", "foc6", "flm1", "nkw1",
+       "hom4", "sav5")
+plotcolors <- sequential_hcl(9, "Viridis")
+
+# Data
+idata <- st_read(file.path(envrmt$path_compiled_data, "envin-umr_kili_stable-isotopes_precipitation_2012-2014.shp"))
+idata$Date <- as.POSIXct(as.POSIXlt(idata$Date), tz = "UTC")
+idata$PlotID <- factor(idata$PlotID, levels = plotlevels)
+idata <- idata[order(idata$PlotID),]
+```
+
+## Overview
+
+The dataset provides detailed information about the stable isotope composition of different precipitation types (rainf, fog, throughfall). It was manually collected on up to 9 study plots on a generally weekly basis between November 2012 and November 2014. The following map shows the distribution of the study plots on the southern slopes of Mt. Kilimanjaro. 
+
+The study plots span across an altitude gradient rising from 950 m to nearly 4,000 m a.s.l. The plot IDs are the ones used within the respective research group.
+
+| PlotID | Land cover |
+|--------|:----------:|
+| fer0   | Forest Erica |
+| fpd0   | Forest Podocarpus disturbed |
+| fpo0   | Forest Podocarpus |
+| foc0   | Forest Ocotea |
+| foc6   | Forest Ocotea |
+| flm1   | Forest lower mountain |
+| nkw1   | Open area near field station |
+| hom4   | Homegarden |
+| sav5   | Savanna |
+
+For further details see section Publication at the end of the document.
+
+```{r}
+mapviewOptions(basemaps = "Esri.WorldImagery")
+mapview(idata, zcol = "PlotID", legend = TRUE)
+```
+
+## Datasets
+
+Precipitation was sampled from rain gauges, fog mesh grids and throughfall installations on the study plots. Throughfall has been measured by many gauges placed across the study plot. These gauges are named "Bnn" with nn being an integer number in the field and lab records. To get the mean throughfall of the respective time slot, the gauge data must be averaged.  
+
+Sampling was carried out manually by local field staff and recorded on paper sheets. Sampling took place about every week. Two intensive sampling campaigns with multiple daily recordings took place in December 2013 and April 2014.
+
+| Folder              | Data                                                    |
+|---------------------|---------------------------------------------------------|
+| data/field_records  | Scans of the original paper sheets group by study plots |
+| data/lab_records    | Digitized paper sheets and isotope analysis data        |
+| data/compiled_data  | Comprehensive dataset as Shapefile and CSV              |
+
+The data in the compiled_data folder does not include the intensive campaigns.
+
+The structure of the compile dataset is as follows:
+
+```{r, echo=FALSE}
+head(idata)
+```
+
+The variables have the following meaning:
+
+| Column              | Content                                          |
+|---------------------|--------------------------------------------------|
+| PlotID   | Study plot ID as used within the research group             |
+| Date     | Date of the observation                                     |
+| Time     | Time of the observation                                     |
+| Season   | Type of rainy season                                        |
+| PrcpType | Type of precipitation (rain, fog, tf = throughfall)         |
+| Elvton   | Elevation of the study plot in m a.s.l                      |
+| PrcpAmt  | Amount of recorded precipitation (rain, fog or throughfall) |
+| dO18     | delta 18O/16O                                               |
+| sddO18   | standard deviation of delta 18O/16O                         |
+| dD       | delta D/H                                                   | 
+| sddD     | standard deviation of delta D/H                             | 
+| dExcess  | Deuterium excess                                            | 
+
+
+## Examples 
+
+The following figures shows the dO18 and dD values of the compiled dataset. The light grey line illustrates the global meteoric water line and the black line the respective local meteoric water line for all (top left), fog (top right), rain (bottom left) and throughfall (bottom right) samples.
+
+```{r, message= FALSE, warning=FALSE}
+facet_idata <- st_drop_geometry(idata)
+facet_idata$facet <- facet_idata$PrcpTyp
+facet_idata <- rbind(facet_idata, data.frame(st_drop_geometry(idata), facet = "all"))
+
+ggplot(facet_idata, aes(x = dO18, y = dD)) + 
+  geom_point(aes(color = PlotID, shape = PrcpTyp)) + 
+  geom_abline(intercept = 10, slope = 8, color = "darkgrey") +
+  geom_smooth(method = "lm", se=FALSE, color = "black") +
+  facet_wrap(vars(facet)) +
+  scale_color_manual(values = plotcolors) + 
+  theme_bw()
+```
+
+
+The following figures shows the seasonal dynamics of the dO18 and dExcess rainfall sample values of the compiled dataset.
+
+```{r, message= FALSE, warning=FALSE}
+ylim_1 <- c(0, 450)
+ylim_2 <- c(-10, 35)  
+
+b <- diff(ylim_1)/diff(ylim_2)
+a <- b * (ylim_1[1] - ylim_2[1])
+
+ggplot(idata[idata$PrcpTyp == "rain",], aes(x = Date, y = PrcpAmt)) + 
+  geom_bar(stat = "identity", color = "black") + 
+  geom_line(aes(y = a + b * dO18), color = "blue") +
+  geom_point(aes(y = a + b * dO18), color = "blue") + 
+  geom_line(aes(y = a + b * dExcess), color = "red") +
+  geom_point(aes(y = a + b * dExcess), color = "red") + 
+  scale_y_continuous("Rainfall (mm)", sec.axis = sec_axis(~ (. - a)/b, name = "delta 18O, d excess")) +
+  facet_wrap(vars(PlotID), ncol = 2) +
+  theme_bw()
+
+```
+
+## Related Publication
+
+Otte I, Detsch F, Gütlein A, Scholl M, Kiese R, Appelhans T, Nauss T (2017) Seasonality of stable isotope composition of atmospheric water input at the southern slopes of Mt. Kilimanjaro, Tanzania. Hydrological Processes 31, 3932–3947. https://doi.org/10.1002/hyp.11311.
+
+
+## Funding
+
+The research was fundet by the German Research Foundation (DFG) as part of the Research Unit 1246 - Kilimanjaro ecosystems under global change (Na 783/5-2).
