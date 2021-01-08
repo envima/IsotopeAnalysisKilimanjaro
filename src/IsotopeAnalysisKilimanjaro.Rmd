@@ -14,15 +14,17 @@ knitr::opts_chunk$set(echo = TRUE)
 library(envimaR)
 source("~/plygrnd/IsotopeAnalysisKilimanjaro/src/functions/000_setup.R")
 
-plotlevels <- c("fer0", "fpd0", "fpo0", "foc0", "foc6", "flm1", "nkw1",
-       "hom4", "sav5")
+plotlevels <- c(
+  "fer0", "fpd0", "fpo0", "foc0", "foc6", "flm1", "nkw1",
+  "hom4", "sav5"
+)
 plotcolors <- sequential_hcl(9, "Viridis")
 
 # Data
 idata <- st_read(file.path(envrmt$path_compiled_data, "envin-umr_kili_stable-isotopes_precipitation_2012-2014.shp"))
 idata$Date <- as.POSIXct(as.POSIXlt(idata$Date), tz = "UTC")
 idata$PlotID <- factor(idata$PlotID, levels = plotlevels)
-idata <- idata[order(idata$PlotID),]
+idata <- idata[order(idata$PlotID), ]
 ```
 
 ## Overview
@@ -97,12 +99,12 @@ facet_idata <- st_drop_geometry(idata)
 facet_idata$facet <- facet_idata$PrcpTyp
 facet_idata <- rbind(facet_idata, data.frame(st_drop_geometry(idata), facet = "all"))
 
-ggplot(facet_idata, aes(x = dO18, y = dD)) + 
-  geom_point(aes(color = PlotID, shape = PrcpTyp)) + 
+ggplot(facet_idata, aes(x = dO18, y = dD)) +
+  geom_point(aes(color = PlotID, shape = PrcpTyp)) +
   geom_abline(intercept = 10, slope = 8, color = "darkgrey") +
-  geom_smooth(method = "lm", se=FALSE, color = "black") +
+  geom_smooth(method = "lm", se = FALSE, color = "black") +
   facet_wrap(vars(facet)) +
-  scale_color_manual(values = plotcolors) + 
+  scale_color_manual(values = plotcolors) +
   theme_bw()
 ```
 
@@ -111,21 +113,20 @@ The following figures shows the seasonal dynamics of the dO18 and dExcess rainfa
 
 ```{r, message= FALSE, warning=FALSE}
 ylim_1 <- c(0, 450)
-ylim_2 <- c(-10, 35)  
+ylim_2 <- c(-10, 35)
 
-b <- diff(ylim_1)/diff(ylim_2)
+b <- diff(ylim_1) / diff(ylim_2)
 a <- b * (ylim_1[1] - ylim_2[1])
 
-ggplot(idata[idata$PrcpTyp == "rain",], aes(x = Date, y = PrcpAmt)) + 
-  geom_bar(stat = "identity", color = "black") + 
+ggplot(idata[idata$PrcpTyp == "rain", ], aes(x = Date, y = PrcpAmt)) +
+  geom_bar(stat = "identity", color = "black") +
   geom_line(aes(y = a + b * dO18), color = "blue") +
-  geom_point(aes(y = a + b * dO18), color = "blue") + 
+  geom_point(aes(y = a + b * dO18), color = "blue") +
   geom_line(aes(y = a + b * dExcess), color = "red") +
-  geom_point(aes(y = a + b * dExcess), color = "red") + 
-  scale_y_continuous("Rainfall (mm)", sec.axis = sec_axis(~ (. - a)/b, name = "delta 18O, d excess")) +
+  geom_point(aes(y = a + b * dExcess), color = "red") +
+  scale_y_continuous("Rainfall (mm)", sec.axis = sec_axis(~ (. - a) / b, name = "delta 18O, d excess")) +
   facet_wrap(vars(PlotID), ncol = 2) +
   theme_bw()
-
 ```
 
 ## Related Publication
