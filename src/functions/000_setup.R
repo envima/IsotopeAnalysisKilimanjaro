@@ -8,19 +8,19 @@ if(Sys.info()[["nodename"]] == "PC19616"){
 
 fcts_folder = file.path(root_folder, "src/functions/")
 
-project_folders = c("data/",
-                    "data/compiled_data/",
-                    "data/lab_records/",
-                    "data/field_records/")
+# project_folders = c("data/",
+#                     "data/compiled_data/",
+#                     "data/lab_records/",
+#                     "data/field_records/",
+#                     "data/hysplit/out/weekly")
 
-libs = c("colorspace", "ggplot2", "mapview", "sf")
+libs = c("colorspace", "ggplot2", "mapview", "opentraj", "sf", "sp")
 
-envrmt = createEnvi(root_folder = root_folder,
-                    fcts_folder = fcts_folder,
-                    folders = project_folders, 
-                    path_prefix = "path_", libs = libs,
-                    alt_env_id = "COMPUTERNAME", alt_env_value = "PCRZP",
-                    alt_env_root_folder = "F:\\BEN\\edu")
+project_folders <- list.dirs(path = root_folder, full.names = FALSE, recursive = TRUE)
+project_folders <- project_folders[!grepl("\\..", project_folders)]
+envrmt <- createEnvi(
+  root_folder = root_folder, fcts_folder = file.path(root_folder, "src/functions/"),  folders = project_folders,
+  libs = libs, create_folders = FALSE)
 
 # More settings
 # none

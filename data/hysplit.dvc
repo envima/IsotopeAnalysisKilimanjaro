@@ -1,0 +1,5 @@
+outs:
+- md5: 36aea8e254932f2b9bf093fb0e99f983.dir
+  size: 3265504814
+  nfiles: 380
+  path: hysplit

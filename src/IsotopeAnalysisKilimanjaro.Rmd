@@ -21,10 +21,19 @@ plotlevels <- c(
 plotcolors <- sequential_hcl(9, "Viridis")
 
 # Data
-idata <- st_read(file.path(envrmt$path_compiled_data, "envin-umr_kili_stable-isotopes_precipitation_2012-2014.shp"))
+idata <- st_read(file.path(envrmt$compiled_data, "envin-umr_kili_stable-isotopes_precipitation_2012-2014.shp"))
 idata$Date <- as.POSIXct(as.POSIXlt(idata$Date), tz = "UTC")
 idata$PlotID <- factor(idata$PlotID, levels = plotlevels)
 idata <- idata[order(idata$PlotID), ]
+
+hdata_files <- list.files(envrmt$weekly, full.names = TRUE)
+
+hdata <- lapply(hdata_files, function(i){
+  load(i)
+  return(traj)
+})
+names(hdata) <- substr(basename(hdata_files), 1, 19)
+
 ```
 
 ## Overview
@@ -45,12 +54,15 @@ The study plots span across an altitude gradient rising from 950 m to nearly 4,0
 | hom4   | Homegarden |
 | sav5   | Savanna |
 
-For further details see section Publication at the end of the document.
 
 ```{r}
 mapviewOptions(basemaps = "Esri.WorldImagery")
 mapview(idata, zcol = "PlotID", legend = TRUE)
 ```
+
+Moisture sources (- 96 hours) of the isotope samples were estimated using backward trajectory computations with the HYSPLIT model (https://www.ready.noaa.gov/HYSPLIT.php) and the R opentraj package (Thalles Santos Silva (2014). opentraj: Tools for Creating and Analysing Air Trajectory Data. R package version 1.0. https://CRAN.R-project.org/package=opentraj). Reanalysis data was taken from NCEP/NCAR version 2 ( https://www.ncdc.noaa.gov/data-access/model-data/model-datasets/reanalysis-1-reanalysis-2).
+
+For further details see reference at the end of this document.
 
 ## Datasets
 
@@ -58,15 +70,20 @@ Precipitation was sampled from rain gauges, fog mesh grids and throughfall insta
 
 Sampling was carried out manually by local field staff and recorded on paper sheets. Sampling took place about every week. Two intensive sampling campaigns with multiple daily recordings took place in December 2013 and April 2014.
 
-| Folder              | Data                                                    |
-|---------------------|---------------------------------------------------------|
-| data/field_records  | Scans of the original paper sheets group by study plots |
-| data/lab_records    | Digitized paper sheets and isotope analysis data        |
-| data/compiled_data  | Comprehensive dataset as Shapefile and CSV              |
+| Folder                    | Data                                                    |
+|---------------------------|---------------------------------------------------------|
+| data/field_records        | Scans of the original paper sheets group by study plots |
+| data/lab_records          | Digitized paper sheets and isotope analysis data        |
+| data/compiled_data        | Comprehensive dataset as Shapefile and CSV              |
+| /data/hysplit             | Datasets related to backward trajectory computation     |
+| /data/hysplit/data        | Site information used to compute backward trajectories  |
+| /data/hysplit/out/evently | Hysplit backward trajectories by event                  |
+| /data/hysplit/out/weekly  | HYSPLIT backward trajectories by week                   |
+| /data/hysplit/reanalysis  | Reanalysis data used as input for the HYSPLIT model     |
 
-The data in the compiled_data folder does not include the intensive campaigns.
+The data in the compiled_data folder does not include the intensive campaigns records that are also available in the lab_records folder.        
 
-The structure of the compile dataset is as follows:
+The structure of the compiled isotope dataset is as follows:
 
 ```{r, echo=FALSE}
 head(idata)
@@ -89,6 +106,30 @@ The variables have the following meaning:
 | sddD     | standard deviation of delta D/H                             | 
 | dExcess  | Deuterium excess                                            | 
 
+
+The backward trajectory information computed with the Hysplit model:
+
+```{r, echo=FALSE}
+head(hdata[[1]])
+```
+
+The variables have the following meaning (see Thalles Santos Silva (2014). opentraj: Tools for Creating and Analysing Air Trajectory Data. R package version 1.0. https://CRAN.R-project.org/package=opentraj):
+
+| Column              | Content                                             |
+|---------------------|-----------------------------------------------------|
+| receptor            | numeric vector                                      |
+| year                | year of the calculation                             |
+| month               | month of the calculation                            |
+| day                 | day of the calculation                              |
+| hour                | hour of the calculation                             |
+| minute              | minute of the calculation                           |
+| hour.inc            | time step (age) in hours of the computed trajectory |
+| lat                 | latitude position of the trajectory                 |
+| lon                 | longitude position of the trajectory                |
+| height              | meters above ground of the trajectory               |
+| pressure            | pressure level of the trajectory                    |
+| date2               | Date and time of the trajectory                     |
+| date                | Start date and time of the calculation              |
 
 ## Examples 
 
@@ -129,6 +170,18 @@ ggplot(idata[idata$PrcpTyp == "rain", ], aes(x = Date, y = PrcpAmt)) +
   theme_bw()
 ```
 
+
+The following map shows the weekly averaged hysplit trajectories.
+
+```{r, message= FALSE, warning=FALSE}
+hdata_sp <- lapply(hdata, function(i){
+  return(Df2SpLines(i, crs = "+init=epsg:4326"))
+})
+hdata_sp <- do.call(rbind, hdata_sp)
+mapview(hdata_sp, label = names(hdata))
+```
+
+
 ## Related Publication
 
 Otte I, Detsch F, Gütlein A, Scholl M, Kiese R, Appelhans T, Nauss T (2017) Seasonality of stable isotope composition of atmospheric water input at the southern slopes of Mt. Kilimanjaro, Tanzania. Hydrological Processes 31, 3932–3947. https://doi.org/10.1002/hyp.11311.
@@ -136,4 +189,4 @@ Otte I, Detsch F, Gütlein A, Scholl M, Kiese R, Appelhans T, Nauss T (2017) Sea
 
 ## Funding
 
-The research was fundet by the German Research Foundation (DFG) as part of the Research Unit 1246 - Kilimanjaro ecosystems under global change (Na 783/5-2).
+The research was fundet by the German Research Foundation (DFG) as part of the Research Unit 1246 - Kilimanjaro ecosystems under global change (Ap 243/1‐2, Na 783/5‐2).
