@@ -1,9 +1,9 @@
 # Set environment for environmental information systems analysis
 
 if(Sys.info()[["nodename"]] == "PC19616"){
-  root_folder = path.expand("~/plygrnd/IsotopeAnalysisKilimanjaro/")
+  root_folder = path.expand("~/plygrnd/IsotopeDataKilimanjaro/")
 } else {
-  root_folder = path.expand("~/project/IsotopeAnalysisKilimanjaro/")
+  root_folder = path.expand("~/project/IsotopeDataKilimanjaro/")
 }
 
 fcts_folder = file.path(root_folder, "src/functions/")

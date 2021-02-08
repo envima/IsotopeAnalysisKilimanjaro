@@ -12,7 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Setup
 library(envimaR)
-source("~/plygrnd/IsotopeAnalysisKilimanjaro/src/functions/000_setup.R")
+source("~/plygrnd/IsotopeDataKilimanjaro/src/functions/000_setup.R")
 
 plotlevels <- c(
   "fer0", "fpd0", "fpo0", "foc0", "foc6", "flm1", "nkw1",
