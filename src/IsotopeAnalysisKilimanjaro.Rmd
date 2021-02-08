@@ -1,5 +1,5 @@
 ---
-title: Data for stable isotope composition of atmospheric water input for 2013
+title: Data of stable isotope composition of atmospheric water input beetween 2012
   and 2014 at the southern slopes of Mt. Kilimanjaro, Tanzania
 author: Insa Otte, Florian Detsch, Adrian Gütlein, Martha Scholl, Ralf Kiese, Tim
   Appelhans, Thomas Nauss
